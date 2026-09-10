@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A Sala do Cofre — Escape Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --wall: #24433D;
+    --wall-dark: #1A322D;
+    --floor: #3B2A20;
+    --floor-dark: #2B1E16;
+    --wood: #5C4230;
+    --wood-dark: #3E2C1F;
+    --brass: #C9A66B;
+    --brass-light: #E4C68F;
+    --paper: #EFE6D2;
+    --paper-dark: #D8CBA9;
+    --ink: #2B2117;
+    --shadow: #0F0C09;
+    --lamp: #F0C078;
+    --metal: #3A3A3A;
+    --metal-light: #56534E;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Inter',sans-serif;
+    background: radial-gradient(ellipse at 50% -10%, #3a2a1c 0%, var(--shadow) 65%);
+    color: var(--paper);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding: 32px 16px 64px;
+  }
+  h1{
+    font-family:'Cormorant Garamond', serif;
+    font-weight:600;
+    font-size: clamp(28px, 5vw, 44px);
+    letter-spacing: 0.5px;
+    margin: 8px 0 2px;
+    color: var(--brass-light);
+    text-align:center;
+  }
+  .subtitle{
+    font-size:14px;
+    color:#B9AF9A;
+    margin: 0 0 28px;
+    text-align:center;
+    max-width: 480px;
+    line-height:1.6;
+  }
+  .room{
+    position:relative;
+    width:100%;
+    max-width: 720px;
+    aspect-ratio: 4 / 3;
+    border-radius: 6px;
+    overflow:hidden;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,166,107,0.25);
+    background: var(--wall);
+  }
+  .wall{
+    position:absolute;
+    inset:0 0 32% 0;
+    background: linear-gradient(180deg, var(--wall) 0%, var(--wall-dark) 100%);
+  }
+  .wall::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background: repeating-linear-gradient(90deg, rgba(0,0,0,0.05) 0 2px, transparent 2px 48px);
+  }
+  .floor{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:32%;
+    background: linear-gradient(180deg, var(--floor) 0%, var(--floor-dark) 100%);
+  }
+  .floor::before{
+    content:'';
+    position:absolute;
+    inset:0;
+    background: repeating-linear-gradient(100deg, rgba(0,0,0,0.15) 0 3px, transparent 3px 64px);
+    opacity:0.6;
+  }
+  .baseboard{
+    position:absolute;
+    left:0; right:0;
+    bottom:32%;
+    height:14px;
+    background: var(--wood-dark);
+  }
+
+  /* Frame with salmon painting */
+  .frame-wrap{
+    position:absolute;
+    top: 14%;
+    right: 10%;
+    width: 30%;
+    aspect-ratio: 3/4;
+    cursor:pointer;
+    transition: transform 0.45s ease;
+    filter: drop-shadow(0 12px 18px rgba(0,0,0,0.5));
+  }
+  .frame-wrap.slid{
+    transform: translateX(115%) rotate(4deg);
+  }
+  .frame{
+    width:100%; height:100%;
+    background: linear-gradient(155deg, var(--brass-light), var(--brass) 40%, #8a6b3a 100%);
+    border-radius:3px;
+    padding: 10px;
+  }
+  .frame-inner{
+    width:100%; height:100%;
+    background: #b7c9c2;
+    border-radius:1px;
+    position:relative;
+    overflow:hidden;
+  }
+  .frame-hint{
+    position:absolute;
+    bottom:-22px;
+    left:50%;
+    transform:translateX(-50%);
+    font-size:11px;
+    color:#9c9384;
+    white-space:nowrap;
+    opacity:0.85;
+  }
+
+  /* Safe behind the painting */
+  .safe{
+    position:absolute;
+    top: 15%;
+    right: 10.5%;
+    width: 28%;
+    aspect-ratio: 3/4;
+    background: linear-gradient(155deg, var(--metal-light), var(--metal) 55%, #202020 100%);
+    border-radius:4px;
+    z-index:1;
+    box-shadow: inset 0 0 0 3px #1c1c1c, inset 0 0 24px rgba(0,0,0,0.6);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .safe.open{
+    background: linear-gradient(155deg, #14100a, #0a0806 100%);
+  }
+  .dial{
+    width: 46%;
+    aspect-ratio:1;
+    border-radius:50%;
+    background: radial-gradient(circle at 38% 32%, var(--brass-light), var(--brass) 55%, #7a5c30 100%);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.5);
+    position:relative;
+  }
+  .dial::after{
+    content:'';
+    position:absolute;
+    top:8%; left:50%;
+    width:3px; height:32%;
+    background:#3a2c14;
+    transform: translateX(-50%);
+    border-radius:2px;
+  }
+  .safe.open .dial{ display:none; }
+  .safe-note{
+    display:none;
+    width:78%;
+    background: var(--paper);
+    color: var(--ink);
+    font-family:'Caveat', cursive;
+    font-size: 16px;
+    line-height:1.35;
+    text-align:center;
+    padding: 10px 8px;
+    border-radius:2px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    transform: rotate(-2deg);
+  }
+  .safe.open .safe-note{ display:block; }
+
+  /* Desk with first note */
+  .desk{
+    position:absolute;
+    left: 8%;
+    bottom: 4%;
+    width: 34%;
+    height: 16%;
+    background: linear-gradient(180deg, var(--wood), var(--wood-dark));
+    border-radius: 3px 3px 0 0;
+    box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+  }
+  .desk::before, .desk::after{
+    content:'';
+    position:absolute;
+    bottom:-22%;
+    width:8%;
+    height:22%;
+    background: var(--wood-dark);
+  }
+  .desk::before{ left:6%; }
+  .desk::after{ right:6%; }
+
+  .note{
+    position:absolute;
+    left: 14%;
+    bottom: 17%;
+    width: 15%;
+    aspect-ratio: 1/1.15;
+    background: var(--paper);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+    transform: rotate(-6deg);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition: transform 0.2s ease, opacity 0.3s ease;
+    z-index:2;
+  }
+  .note:hover{ transform: rotate(-3deg) scale(1.05); }
+  .note.found{ opacity:0; pointer-events:none; }
+  .note span{
+    font-family:'Caveat', cursive;
+    font-weight:700;
+    font-size: clamp(14px, 2.4vw, 20px);
+    color: var(--ink);
+  }
+
+  /* Lamp glow */
+  .lamp-glow{
+    position:absolute;
+    top: -10%;
+    left: 30%;
+    width: 40%;
+    height: 60%;
+    background: radial-gradient(ellipse at center, rgba(240,192,120,0.18), transparent 70%);
+    pointer-events:none;
+  }
+
+  .status-bar{
+    margin-top: 22px;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    font-size:13px;
+    color:#B9AF9A;
+  }
+  .pill{
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(201,166,107,0.35);
+    background: rgba(255,255,255,0.03);
+  }
+  .pill.active{
+    color: var(--ink);
+    background: var(--brass-light);
+    border-color: var(--brass-light);
+    font-weight:600;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed;
+    inset:0;
+    background: rgba(10,8,6,0.72);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:10;
+    padding: 20px;
+  }
+  .overlay.show{ display:flex; }
+  .modal{
+    background: var(--paper);
+    color: var(--ink);
+    max-width: 360px;
+    width:100%;
+    border-radius: 6px;
+    padding: 28px 26px 24px;
+    text-align:center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    position:relative;
+  }
+  .modal h2{
+    font-family:'Cormorant Garamond', serif;
+    font-size: 22px;
+    margin: 0 0 6px;
+  }
+  .modal p{
+    font-size:14px;
+    line-height:1.6;
+    color:#4a3d2c;
+    margin: 0 0 16px;
+  }
+  .paper-clue{
+    font-family:'Caveat', cursive;
+    font-size: 30px;
+    font-weight:700;
+    letter-spacing: 2px;
+    margin: 4px 0 18px;
+    color:var(--ink);
+  }
+  .modal input{
+    width:100%;
+    padding: 10px 12px;
+    font-size:18px;
+    text-align:center;
+    letter-spacing: 3px;
+    text-transform:uppercase;
+    border-radius:4px;
+    border: 1px solid var(--paper-dark);
+    margin-bottom: 8px;
+    font-family:'Inter',sans-serif;
+    background:#fff;
+  }
+  .modal .error{
+    font-size:12px;
+    color:#a03a2c;
+    min-height:16px;
+    margin-bottom: 8px;
+  }
+  .btn{
+    display:inline-block;
+    padding: 9px 20px;
+    border-radius: 4px;
+    border:none;
+    background: var(--ink);
+    color: var(--paper);
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+  .btn:hover{ opacity:0.9; }
+  .btn-ghost{
+    background:transparent;
+    color:#4a3d2c;
+    border: 1px solid var(--paper-dark);
+    margin-left:8px;
+  }
+  .close-x{
+    position:absolute;
+    top:10px; right:12px;
+    background:none;
+    border:none;
+    font-size:18px;
+    color:#8a7a5f;
+    cursor:pointer;
+  }
+  .final-note{
+    font-family:'Caveat', cursive;
+    font-size: 26px;
+    line-height:1.4;
+    color: var(--ink);
+    margin: 10px 0 20px;
+  }
+  @media (max-width:520px){
+    .note span{ font-size:14px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>A sala do cofre</h1>
+<p class="subtitle">Investigue a sala. Encontre a pista, descubra o código e abra o cofre atrás do quadro.</p>
+
+<div class="room" id="room">
+  <div class="wall"></div>
+  <div class="floor"></div>
+  <div class="baseboard"></div>
+  <div class="lamp-glow"></div>
+
+  <div class="safe" id="safe">
+    <div class="dial"></div>
+    <div class="safe-note">Sua cor está relacionada com a alimentação.</div>
+  </div>
+
+  <div class="frame-wrap" id="frameWrap">
+    <div class="frame">
+      <div class="frame-inner" id="frameInner"></div>
+    </div>
+    <div class="frame-hint">clique no quadro</div>
+  </div>
+
+  <div class="desk"></div>
+  <div class="note" id="note"><span>?</span></div>
+</div>
+
+<div class="status-bar">
+  <span class="pill" id="pill1">1. Encontrar a pista</span>
+  <span class="pill" id="pill2">2. Abrir o cofre</span>
+  <span class="pill" id="pill3">3. Ler o segredo</span>
+</div>
+
+<div class="overlay" id="clueOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeOverlay('clueOverlay')">×</button>
+    <h2>Um bilhete dobrado</h2>
+    <p>Estava escondido sobre a escrivaninha.</p>
+    <div class="paper-clue">COR</div>
+    <button class="btn" onclick="closeOverlay('clueOverlay')">Guardar pista</button>
+  </div>
+</div>
+
+<div class="overlay" id="safeOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeOverlay('safeOverlay')">×</button>
+    <h2>Cofre trancado</h2>
+    <p>Um teclado de três letras. Qual é o código?</p>
+    <input type="text" id="codeInput" maxlength="6" placeholder="Digite o código">
+    <div class="error" id="codeError"></div>
+    <button class="btn" onclick="tryCode()">Abrir</button>
+    <button class="btn btn-ghost" onclick="closeOverlay('safeOverlay')">Cancelar</button>
+  </div>
+</div>
+
+<div class="overlay" id="winOverlay">
+  <div class="modal">
+    <button class="close-x" onclick="closeOverlay('winOverlay')">×</button>
+    <h2>O cofre se abre</h2>
+    <div class="final-note">"Sua cor está relacionada com a alimentação."</div>
+    <p>Fim de jogo.</p>
+    <button class="btn" onclick="closeOverlay('winOverlay')">Fechar</button>
+  </div>
+</div>
+
+<script>
+  var foundClue = false;
+  var safeOpen = false;
+
+  var salmonSVG = '<svg viewBox="0 0 200 260" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">' +
+    '<rect width="200" height="260" fill="#b7c9c2"/>' +
+    '<ellipse cx="100" cy="150" rx="70" ry="42" fill="#e8917a"/>' +
+    '<path d="M30 150 L-10 120 L-10 180 Z" fill="#d97a63"/>' +
+    '<ellipse cx="145" cy="150" rx="30" ry="26" fill="#e39c86"/>' +
+    '<circle cx="162" cy="145" r="4" fill="#2b2117"/>' +
+    '<path d="M100 108 Q120 95 140 110" stroke="#c9705a" stroke-width="4" fill="none"/>' +
+    '<path d="M95 190 Q120 205 145 190" stroke="#c9705a" stroke-width="4" fill="none"/>' +
+    '</svg>';
+  document.getElementById('frameInner').innerHTML = salmonSVG;
+
+  var note = document.getElementById('note');
+  var frameWrap = document.getElementById('frameWrap');
+  var safe = document.getElementById('safe');
+
+  note.addEventListener('click', function(){
+    if(foundClue) return;
+    foundClue = true;
+    note.classList.add('found');
+    document.getElementById('pill1').classList.add('active');
+    openOverlay('clueOverlay');
+  });
+
+  frameWrap.addEventListener('click', function(){
+    if(safeOpen) return;
+    frameWrap.classList.toggle('slid');
+    if(frameWrap.classList.contains('slid')){
+      openOverlay('safeOverlay');
+    }
+  });
+
+  safe.addEventListener('click', function(){
+    if(!frameWrap.classList.contains('slid')) return;
+    if(safeOpen) return;
+    openOverlay('safeOverlay');
+  });
+
+  function openOverlay(id){
+    document.getElementById(id).classList.add('show');
+    if(id === 'safeOverlay'){
+      setTimeout(function(){
+        var input = document.getElementById('codeInput');
+        input.value = '';
+        document.getElementById('codeError').textContent = '';
+        input.focus();
+      }, 50);
+    }
+  }
+  function closeOverlay(id){
+    document.getElementById(id).classList.remove('show');
+  }
+
+  function tryCode(){
+    var input = document.getElementById('codeInput');
+    var val = input.value.trim().toUpperCase();
+    var errorEl = document.getElementById('codeError');
+    if(val === ''){
+      errorEl.textContent = 'Digite um código antes de continuar.';
+      return;
+    }
+    if(val === 'COR'){
+      safeOpen = true;
+      safe.classList.add('open');
+      document.getElementById('pill2').classList.add('active');
+      closeOverlay('safeOverlay');
+      document.getElementById('pill3').classList.add('active');
+      setTimeout(function(){ openOverlay('winOverlay'); }, 400);
+    } else {
+      errorEl.textContent = 'Código incorreto. Tente novamente.';
+    }
+  }
+
+  document.getElementById('codeInput').addEventListener('keydown', function(e){
+    if(e.key === 'Enter'){ tryCode(); }
+  });
+</script>
+
+</body>
+</html>
